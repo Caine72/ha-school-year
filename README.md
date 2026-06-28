@@ -107,23 +107,10 @@ card:
   primary: Matsedel
   tap_action:
     action: navigate
-    navigation_path: /common-dashboards/menu-phone
+    navigation_path: /common-dashboards/school-meals
 ```
 
 For strict "only show on actual school days", use `binary_sensor.school_year_school_day` instead.
-
-## Release process
-
-HACS can install from the default branch, but GitHub releases give nicer update handling.
-
-Recommended release flow:
-
-```bash
-git tag v0.1.9
-git push origin v0.1.9
-```
-
-Then create a GitHub Release from that tag. When using GitHub releases, HACS uses the latest release tag as the remote version.
 
 ## Disclaimer
 

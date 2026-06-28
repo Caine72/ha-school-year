@@ -1,0 +1,14 @@
+{
+  "domain": "school_year",
+  "name": "School Year",
+  "after_dependencies": [],
+  "codeowners": [
+    "@Caine72"
+  ],
+  "config_flow": true,
+  "documentation": "https://github.com/Caine72/ha-school-year",
+  "iot_class": "cloud_polling",
+  "issue_tracker": "https://github.com/Caine72/ha-school-year/issues",
+  "requirements": [],
+  "version": "0.1.9"
+}

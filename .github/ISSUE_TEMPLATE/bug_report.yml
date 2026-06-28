@@ -1,0 +1,37 @@
+name: Bug report
+about: Report a problem with the integration
+labels: bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting an issue. This integration is maintained for private use, so bug reports are welcome but fixes are handled when they fit my own setup and available time.
+  - type: input
+    id: ha_version
+    attributes:
+      label: Home Assistant version
+      placeholder: 2026.6.x
+    validations:
+      required: true
+  - type: input
+    id: integration_version
+    attributes:
+      label: Integration version
+      placeholder: 0.1.9
+    validations:
+      required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What happened? What did you expect to happen?
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs
+      description: Relevant Home Assistant logs, if available.
+      render: text
+    validations:
+      required: false

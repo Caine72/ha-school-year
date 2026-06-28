@@ -1,0 +1,42 @@
+{
+  "entity": {
+    "calendar": {
+      "school_closures": {
+        "default": "mdi:calendar"
+      }
+    },
+    "binary_sensor": {
+      "school_day": {
+        "default": "mdi:school",
+        "state": {
+          "on": "mdi:school",
+          "off": "mdi:school-off"
+        }
+      },
+      "school_day_in_lookahead": {
+        "default": "mdi:calendar-check",
+        "state": {
+          "on": "mdi:calendar-check",
+          "off": "mdi:calendar-remove"
+        }
+      }
+    },
+    "sensor": {
+      "school_year_status": {
+        "default": "mdi:school-outline"
+      },
+      "current_school_closure": {
+        "default": "mdi:calendar-alert"
+      },
+      "next_school_closure": {
+        "default": "mdi:calendar-clock"
+      },
+      "next_school_day": {
+        "default": "mdi:calendar-today"
+      },
+      "source_updated": {
+        "default": "mdi:web-refresh"
+      }
+    }
+  }
+}

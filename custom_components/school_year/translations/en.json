@@ -1,0 +1,89 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "School year source",
+        "description": "Fetch compulsory school term dates and breaks from the configured official source.",
+        "data": {
+          "url": "Source URL",
+          "page_check_interval_hours": "Page check interval",
+          "include_inferred_long_breaks": "Include inferred long breaks",
+          "poll_hours": "Page check interval",
+          "include_inferred_breaks": "Include inferred long breaks",
+          "school_day_lookahead_days": "School day lookahead days",
+          "school_menu_lookahead_days": "School day lookahead days"
+        },
+        "data_description": {
+          "url": "Official school-year page to fetch. Keep the default unless the source page changes.",
+          "page_check_interval_hours": "How often Home Assistant should refetch the official page, in hours. Daily state changes still update at midnight from the cached data.",
+          "include_inferred_long_breaks": "Adds summer and Christmas break events by using the gaps between known term end and term start dates. Disable this if you only want breaks explicitly listed on the page.",
+          "poll_hours": "How often Home Assistant should refetch the official page, in hours. Daily state changes still update at midnight from the cached data.",
+          "include_inferred_breaks": "Adds summer and Christmas break events by using the gaps between known term end and term start dates. Disable this if you only want breaks explicitly listed on the page.",
+          "school_day_lookahead_days": "How many days ahead should count as having a school day soon. Default 2 makes the lookahead entity turn on during weekends before Monday and on the last day before school resumes.",
+          "school_menu_lookahead_days": "How many days ahead should count as having a school day soon. Default 2 makes the lookahead entity turn on during weekends before Monday and on the last day before school resumes."
+        }
+      }
+    },
+    "abort": {
+      "already_configured": "School year is already configured."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "School year options",
+        "description": "Control how the official school-year page is fetched and interpreted.",
+        "data": {
+          "url": "Source URL",
+          "page_check_interval_hours": "Page check interval",
+          "include_inferred_long_breaks": "Include inferred long breaks",
+          "poll_hours": "Page check interval",
+          "include_inferred_breaks": "Include inferred long breaks",
+          "school_day_lookahead_days": "School day lookahead days",
+          "school_menu_lookahead_days": "School day lookahead days"
+        },
+        "data_description": {
+          "url": "Official school-year page to fetch. Keep the default unless the source page changes.",
+          "page_check_interval_hours": "How often Home Assistant should refetch the official page, in hours. Daily state changes still update at midnight from the cached data.",
+          "include_inferred_long_breaks": "Adds summer and Christmas break events by using the gaps between known term end and term start dates. Disable this if you only want breaks explicitly listed on the page.",
+          "poll_hours": "How often Home Assistant should refetch the official page, in hours. Daily state changes still update at midnight from the cached data.",
+          "include_inferred_breaks": "Adds summer and Christmas break events by using the gaps between known term end and term start dates. Disable this if you only want breaks explicitly listed on the page.",
+          "school_day_lookahead_days": "How many days ahead should count as having a school day soon. Default 2 makes the lookahead entity turn on during weekends before Monday and on the last day before school resumes.",
+          "school_menu_lookahead_days": "How many days ahead should count as having a school day soon. Default 2 makes the lookahead entity turn on during weekends before Monday and on the last day before school resumes."
+        }
+      }
+    }
+  },
+  "entity": {
+    "calendar": {
+      "school_closures": {
+        "name": "School closures"
+      }
+    },
+    "binary_sensor": {
+      "school_day": {
+        "name": "School day"
+      },
+      "school_day_in_lookahead": {
+        "name": "School day in lookahead"
+      }
+    },
+    "sensor": {
+      "school_year_status": {
+        "name": "School year status"
+      },
+      "current_school_closure": {
+        "name": "Current school closure"
+      },
+      "next_school_closure": {
+        "name": "Next school closure"
+      },
+      "source_updated": {
+        "name": "Source updated"
+      },
+      "next_school_day": {
+        "name": "Next school day"
+      }
+    }
+  }
+}

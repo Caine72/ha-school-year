@@ -27,10 +27,7 @@ async def async_migrate_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     changed = False
 
     for store in (data, options):
-        if (
-            LEGACY_CONF_POLL_HOURS in store
-            and CONF_PAGE_CHECK_INTERVAL_HOURS not in store
-        ):
+        if LEGACY_CONF_POLL_HOURS in store and CONF_PAGE_CHECK_INTERVAL_HOURS not in store:
             store[CONF_PAGE_CHECK_INTERVAL_HOURS] = store.pop(LEGACY_CONF_POLL_HOURS)
             changed = True
         elif LEGACY_CONF_POLL_HOURS in store:
@@ -49,22 +46,15 @@ async def async_migrate_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             store.pop(LEGACY_CONF_INCLUDE_INFERRED_BREAKS)
             changed = True
 
-        if (
-            LEGACY_CONF_MENU_LOOKAHEAD_DAYS in store
-            and CONF_SCHOOL_DAY_LOOKAHEAD_DAYS not in store
-        ):
-            store[CONF_SCHOOL_DAY_LOOKAHEAD_DAYS] = store.pop(
-                LEGACY_CONF_MENU_LOOKAHEAD_DAYS
-            )
+        if LEGACY_CONF_MENU_LOOKAHEAD_DAYS in store and CONF_SCHOOL_DAY_LOOKAHEAD_DAYS not in store:
+            store[CONF_SCHOOL_DAY_LOOKAHEAD_DAYS] = store.pop(LEGACY_CONF_MENU_LOOKAHEAD_DAYS)
             changed = True
         elif LEGACY_CONF_MENU_LOOKAHEAD_DAYS in store:
             store.pop(LEGACY_CONF_MENU_LOOKAHEAD_DAYS)
             changed = True
 
     if changed or entry.minor_version < 5:
-        hass.config_entries.async_update_entry(
-            entry, data=data, options=options, minor_version=5
-        )
+        hass.config_entries.async_update_entry(entry, data=data, options=options, minor_version=5)
 
     return True
 
@@ -77,6 +67,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     hass.data.setdefault(DOMAIN, {})[entry.entry_id] = coordinator
 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
+    coordinator.start_midnight_refresh()
     return True
 
 
@@ -85,6 +76,8 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     unload_ok = await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
 
     if unload_ok:
+        coordinator: SchoolYearCoordinator = hass.data[DOMAIN][entry.entry_id]
+        coordinator.stop_midnight_refresh()
         hass.data[DOMAIN].pop(entry.entry_id)
 
     return unload_ok

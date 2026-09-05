@@ -1,23 +1,31 @@
 name: Bug report
-about: Report a problem with the integration
-labels: bug
+description: Report a reproducible School Year integration problem
+title: "[Bug]: "
+labels:
+  - bug
 body:
-  - type: markdown
+  - type: checkboxes
     attributes:
-      value: |
-        Thanks for reporting an issue. This integration is maintained for private use, so bug reports are welcome but fixes are handled when they fit my own setup and available time.
+      label: Before submitting
+      options:
+        - label: I am using the latest released version of School Year.
+          required: true
+        - label: I searched existing issues for the same problem.
+          required: true
+        - label: I removed tokens, private URLs, names, and other household data.
+          required: true
   - type: input
     id: ha_version
     attributes:
       label: Home Assistant version
-      placeholder: 2026.6.x
+      placeholder: 2026.9.0
     validations:
       required: true
   - type: input
     id: integration_version
     attributes:
       label: Integration version
-      placeholder: 0.1.9
+      placeholder: 0.1.10
     validations:
       required: true
   - type: textarea
@@ -28,10 +36,18 @@ body:
     validations:
       required: true
   - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Open ...
+        2. Select ...
+        3. Observe ...
+    validations:
+      required: true
+  - type: textarea
     id: logs
     attributes:
-      label: Logs
-      description: Relevant Home Assistant logs, if available.
+      label: Relevant logs
+      description: Include only sanitized School Year or Home Assistant errors.
       render: text
-    validations:
-      required: false

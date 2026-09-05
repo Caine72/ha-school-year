@@ -1,0 +1,99 @@
+name: Home Assistant compatibility
+
+on:
+  schedule:
+    - cron: "23 4 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: home-assistant-compatibility
+  cancel-in-progress: true
+
+jobs:
+  resolve-releases:
+    name: Resolve Home Assistant releases
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.releases.outputs.matrix }}
+    steps:
+      - name: Resolve stable and beta releases
+        id: releases
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          releases_file="$(mktemp)"
+          gh api "repos/home-assistant/core/releases?per_page=100" > "${releases_file}"
+          python - "${releases_file}" <<'PY'
+          import json
+          import os
+          import re
+          import sys
+
+          releases = json.load(open(sys.argv[1], encoding="utf-8"))
+          releases = [release for release in releases if not release["draft"]]
+          stable = next(
+              (release for release in releases if not release["prerelease"]),
+              None,
+          )
+          if stable is None:
+              raise SystemExit("No stable Home Assistant release found")
+
+          def version(tag):
+              match = re.fullmatch(r"(\d+)\.(\d+)\.(\d+)(?:b(\d+))?", tag)
+              if match is None:
+                  raise ValueError(f"Unsupported Home Assistant release tag: {tag}")
+              year, month, patch, beta_number = match.groups()
+              return int(year), int(month), int(patch), int(beta_number or -1)
+
+          stable_version = version(stable["tag_name"])
+          beta = next(
+              (
+                  release
+                  for release in releases
+                  if release["prerelease"]
+                  and version(release["tag_name"])[:2] > stable_version[:2]
+              ),
+              None,
+          )
+          include = [{"channel": "stable", "ref": stable["tag_name"]}]
+          if beta is not None:
+              include.append({"channel": "beta", "ref": beta["tag_name"]})
+
+          matrix = json.dumps({"include": include}, separators=(",", ":"))
+          with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as output:
+              output.write(f"matrix={matrix}\n")
+          PY
+
+  validate:
+    name: Core ${{ matrix.channel }} (${{ matrix.ref }})
+    needs: resolve-releases
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.resolve-releases.outputs.matrix) }}
+    steps:
+      - name: Check out School Year
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.14"
+      - name: Set up uv
+        uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
+        with:
+          enable-cache: false
+      - name: Install compatibility test environment
+        env:
+          HA_VERSION: ${{ matrix.ref }}
+        run: |
+          uv venv .venv --python "${pythonLocation}/bin/python"
+          uv pip install --python .venv/bin/python \
+            "homeassistant==${HA_VERSION}" \
+            pytest-homeassistant-custom-component
+      - name: Run behavioral test suite
+        run: .venv/bin/pytest -q

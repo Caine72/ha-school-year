@@ -217,7 +217,8 @@ class NextSchoolDaySensor(SchoolYearEntity, SensorEntity):
             }
 
         return {
-            "within_lookahead": (target_date - self.today).days <= self.coordinator.school_day_lookahead_days,
+            "within_lookahead": (target_date - self.today).days
+            <= self.coordinator.school_day_lookahead_days,
             "reason": (
                 "today is a school day"
                 if target_date == self.today

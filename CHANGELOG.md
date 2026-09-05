@@ -1,5 +1,22 @@
 # Changelog
 
+## Unreleased
+
+- Validate source connectivity and schedule completeness before saving configuration.
+- Reload the integration automatically after options change.
+- Reject incomplete, overlapping, or inverted parsed school terms.
+- Use one coordinator-level midnight refresh for all entities.
+- Add focused parser, config-flow, and coordinator tests plus linting in CI.
+- Pin GitHub Actions to immutable commits.
+- Add MIT licensing, repository guidance, issue and pull-request templates,
+  Dependabot, and scheduled Home Assistant compatibility checks.
+- Add terse local validation, development setup, and release-readiness scripts.
+
+## 0.1.10
+
+- Updated the release version after the generic repository rename.
+- Corrected the dashboard example navigation path and cleaned up the README.
+
 ## 0.1.9
 
 - Renamed the HACS repository and integration domain to generic `school_year`.

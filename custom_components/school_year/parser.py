@@ -6,18 +6,17 @@ stable public page structure: term heading -> subsection heading -> date rows.
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass
 from datetime import date, datetime, timedelta
 from html import unescape
 from html.parser import HTMLParser
-import re
 from typing import Any
 
 from .const import (
     STATE_OUTSIDE_TERM,
     STATE_SCHOOL_CLOSED,
     STATE_SCHOOL_DAY,
-    STATE_UNKNOWN,
     STATE_WEEKEND,
     SUPPORTED_PARSER,
     SUPPORTED_SCHOOL_FORM,
@@ -167,7 +166,9 @@ class SchoolYearData:
         """Return the term containing the day, if any."""
         return next((term for term in self.terms if term.contains(day)), None)
 
-    def active_events_for_day(self, day: date, *, closures_only: bool = False) -> tuple[SchoolEvent, ...]:
+    def active_events_for_day(
+        self, day: date, *, closures_only: bool = False
+    ) -> tuple[SchoolEvent, ...]:
         """Return events active on a given day."""
         events = self.closure_events if closures_only else self.events
         return tuple(event for event in events if event.is_active(day))
@@ -181,9 +182,7 @@ class SchoolYearData:
             return None
         return sorted(active, key=lambda event: (event.start, event.end, event.name))[0]
 
-    def next_event_for_day(
-        self, day: date, *, closures_only: bool = False
-    ) -> SchoolEvent | None:
+    def next_event_for_day(self, day: date, *, closures_only: bool = False) -> SchoolEvent | None:
         """Return the current or next event relative to a day."""
         events = self.closure_events if closures_only else self.events
         upcoming = [event for event in events if event.is_upcoming_or_active(day)]
@@ -416,14 +415,13 @@ def parse_school_year_html(
                     )
                 )
 
+    _validate_terms(terms)
+
     if include_inferred_breaks:
         events.extend(_infer_between_term_breaks(terms))
 
     terms_tuple = tuple(terms)
     events_tuple = tuple(sorted(events, key=lambda event: (event.start, event.end, event.name)))
-
-    if not terms_tuple:
-        raise ValueError("No school terms could be parsed from the source page")
 
     return SchoolYearData(
         source_url=source_url,
@@ -432,6 +430,25 @@ def parse_school_year_html(
         terms=terms_tuple,
         events=events_tuple,
     )
+
+
+def _validate_terms(terms: list[SchoolTerm]) -> None:
+    """Reject partial or internally inconsistent parser results."""
+    if not terms:
+        raise ValueError("No school terms could be parsed from the source page")
+
+    incomplete = [term.name for term in terms if term.start is None or term.end is None]
+    if incomplete:
+        raise ValueError(f"Incomplete school terms: {', '.join(incomplete)}")
+
+    complete_terms = sorted(terms, key=lambda term: term.start or date.min)
+    for term in complete_terms:
+        if term.start is not None and term.end is not None and term.start > term.end:
+            raise ValueError(f"School term starts after it ends: {term.name}")
+
+    for previous, current in zip(complete_terms, complete_terms[1:], strict=False):
+        if previous.end is not None and current.start is not None and current.start <= previous.end:
+            raise ValueError(f"School terms overlap: {previous.name} and {current.name}")
 
 
 def _extract_blocks(html: str) -> list[str]:

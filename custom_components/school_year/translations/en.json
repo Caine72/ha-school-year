@@ -26,6 +26,10 @@
     },
     "abort": {
       "already_configured": "School year is already configured."
+    },
+    "error": {
+      "cannot_connect": "Unable to connect to the school-year source.",
+      "invalid_source": "The source did not contain a complete, supported school-year schedule."
     }
   },
   "options": {
@@ -52,6 +56,10 @@
           "school_menu_lookahead_days": "How many days ahead should count as having a school day soon. Default 2 makes the lookahead entity turn on during weekends before Monday and on the last day before school resumes."
         }
       }
+    },
+    "error": {
+      "cannot_connect": "Unable to connect to the school-year source.",
+      "invalid_source": "The source did not contain a complete, supported school-year schedule."
     }
   },
   "entity": {

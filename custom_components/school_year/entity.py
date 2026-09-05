@@ -2,11 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime
-
-from homeassistant.core import callback
 from homeassistant.helpers.device_registry import DeviceEntryType, DeviceInfo
-from homeassistant.helpers.event import async_track_time_change
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from homeassistant.util import dt as dt_util
 
@@ -45,24 +41,6 @@ class SchoolYearEntity(CoordinatorEntity[SchoolYearCoordinator]):
     def suggested_object_id(self) -> str:
         """Return a clearer initial entity object ID."""
         return self._suggested_object_id
-
-    async def async_added_to_hass(self) -> None:
-        """Schedule a lightweight state refresh just after midnight."""
-        await super().async_added_to_hass()
-        self.async_on_remove(
-            async_track_time_change(
-                self.hass,
-                self._handle_midnight_refresh,
-                hour=0,
-                minute=0,
-                second=5,
-            )
-        )
-
-    @callback
-    def _handle_midnight_refresh(self, _now: datetime) -> None:
-        """Write entity state when the local date changes."""
-        self.async_write_ha_state()
 
     @property
     def today(self):

@@ -93,8 +93,8 @@ jobs:
         run: |
           uv venv .venv --python "${pythonLocation}/bin/python"
           uv pip install --python .venv/bin/python \
-            "homeassistant==${HA_VERSION}" \
-            "pytest>=8" \
             pytest-homeassistant-custom-component
+          uv pip install --python .venv/bin/python --upgrade --no-deps \
+            "homeassistant==${HA_VERSION}"
       - name: Run behavioral test suite
         run: .venv/bin/pytest -q

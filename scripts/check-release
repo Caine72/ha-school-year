@@ -31,6 +31,16 @@ if [[ "$(git branch --show-current)" != "main" ]]; then
   exit 1
 fi
 
+if [[ "$(git rev-parse HEAD)" != "$(git rev-parse origin/main)" ]]; then
+  printf 'Local main does not match origin/main.\n' >&2
+  exit 1
+fi
+
+if git show-ref --verify --quiet "refs/tags/v${VERSION}"; then
+  printf 'Release tag v%s already exists.\n' "${VERSION}" >&2
+  exit 1
+fi
+
 ./scripts/validate
 
 printf 'RELEASE CHECK PASS: v%s\n' "${VERSION}"

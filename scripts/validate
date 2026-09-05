@@ -1,0 +1,65 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+FIX=false
+
+case "${1:-}" in
+  "") ;;
+  --fix) FIX=true ;;
+  -h|--help)
+    printf 'Usage: ./scripts/validate [--fix]\n'
+    exit 0
+    ;;
+  *)
+    printf 'Unknown option: %s\n' "$1" >&2
+    exit 2
+    ;;
+esac
+
+cd "${REPO_ROOT}"
+
+if [[ -x .venv/bin/python ]]; then
+  PYTHON="${REPO_ROOT}/.venv/bin/python"
+  RUFF="${REPO_ROOT}/.venv/bin/ruff"
+  PYTEST="${REPO_ROOT}/.venv/bin/pytest"
+else
+  PYTHON="$(command -v python3)"
+  RUFF="$(command -v ruff || true)"
+  PYTEST="$(command -v pytest || true)"
+fi
+
+if [[ -z "${RUFF}" || -z "${PYTEST}" ]]; then
+  printf 'Development tools are missing. Run ./scripts/setup-dev first.\n' >&2
+  exit 2
+fi
+
+if [[ "${FIX}" == true ]]; then
+  "${RUFF}" check --fix .
+  "${RUFF}" format .
+fi
+
+"${RUFF}" check --quiet .
+"${RUFF}" format --check --quiet .
+"${PYTHON}" -m compileall -q custom_components tests
+
+while IFS= read -r -d '' file; do
+  "${PYTHON}" -m json.tool "${file}" >/dev/null
+done < <(find custom_components -type f -name '*.json' -print0)
+
+"${PYTHON}" - <<'PY'
+from pathlib import Path
+
+import yaml
+
+for root in (Path(".github"), Path("custom_components")):
+    for pattern in ("*.yaml", "*.yml"):
+        for path in root.rglob(pattern):
+            yaml.safe_load(path.read_text(encoding="utf-8"))
+PY
+
+git diff --check
+"${PYTEST}" -q
+
+printf 'VALIDATION PASS\n'

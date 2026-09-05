@@ -86,8 +86,6 @@ def _to_calendar_event(event: SchoolEvent) -> CalendarEvent:
         start=event.start,
         end=event.calendar_end,
         description=(
-            f"Type: {event.event_type}\n"
-            f"Source row: {event.raw}\n"
-            f"Inferred: {event.inferred}"
+            f"Type: {event.event_type}\nSource row: {event.raw}\nInferred: {event.inferred}"
         ),
     )

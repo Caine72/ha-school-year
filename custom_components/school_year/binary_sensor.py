@@ -60,9 +60,7 @@ class SchoolDayBinarySensor(SchoolYearEntity, BinarySensorEntity):
         return status.as_dict()
 
 
-class SchoolDayInLookaheadBinarySensor(
-    SchoolYearEntity, BinarySensorEntity
-):
+class SchoolDayInLookaheadBinarySensor(SchoolYearEntity, BinarySensorEntity):
     """Binary sensor that is on when a school day is within the lookahead window."""
 
     _attr_translation_key = "school_day_in_lookahead"

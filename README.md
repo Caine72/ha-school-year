@@ -115,3 +115,20 @@ For strict "only show on actual school days", use `binary_sensor.school_year_sch
 ## Disclaimer
 
 This project is not affiliated with Skellefteå kommun, Home Assistant, or HACS. It currently scrapes/parses the public Skellefteå kommun grundskola school-year page. If that page changes format, the integration can break.
+
+## Development
+
+Create a virtual environment, install `requirements-dev.txt`, then run the same checks as CI:
+
+```text
+./scripts/validate --fix
+./scripts/validate
+```
+
+CI also runs HACS and Hassfest validation. Parser tests use small representative HTML fixtures and do not contact the municipality website.
+
+Run `./scripts/setup-dev` once if the local development dependencies are missing.
+
+## License
+
+School Year is available under the [MIT License](LICENSE).

@@ -3,15 +3,16 @@
 from __future__ import annotations
 
 import asyncio
-from datetime import timedelta
 import logging
+from collections.abc import Callable
+from datetime import datetime, timedelta
 
 from aiohttp import ClientError
-
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_URL
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
+from homeassistant.helpers.event import async_track_time_change
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 from homeassistant.util import dt as dt_util
 
@@ -32,6 +33,41 @@ from .parser import SchoolYearData, parse_school_year_html
 _LOGGER = logging.getLogger(__name__)
 
 
+class CannotConnectError(Exception):
+    """Raised when the configured source cannot be fetched."""
+
+
+class InvalidSourceError(Exception):
+    """Raised when the configured source does not contain usable school-year data."""
+
+
+async def async_fetch_school_year_data(
+    hass: HomeAssistant,
+    source_url: str,
+    *,
+    include_inferred_breaks: bool,
+) -> SchoolYearData:
+    """Fetch and parse school-year data from a source URL."""
+    session = async_get_clientsession(hass)
+    try:
+        async with asyncio.timeout(30):
+            async with session.get(source_url) as response:
+                response.raise_for_status()
+                html = await response.text()
+    except (TimeoutError, ClientError) as err:
+        raise CannotConnectError(f"Could not fetch school-year page: {err}") from err
+
+    try:
+        return parse_school_year_html(
+            html,
+            source_url,
+            include_inferred_breaks=include_inferred_breaks,
+            fetched_at=dt_util.now(),
+        )
+    except (TypeError, ValueError) as err:
+        raise InvalidSourceError(f"Could not parse school-year page: {err}") from err
+
+
 class SchoolYearCoordinator(DataUpdateCoordinator[SchoolYearData]):
     """Fetch and parse school-year data."""
 
@@ -40,7 +76,7 @@ class SchoolYearCoordinator(DataUpdateCoordinator[SchoolYearData]):
     def __init__(self, hass: HomeAssistant, entry: ConfigEntry) -> None:
         """Initialize the coordinator."""
         self.config_entry = entry
-        self._session = async_get_clientsession(hass)
+        self._cancel_midnight_refresh: Callable[[], None] | None = None
 
         poll_hours = int(
             entry.options.get(
@@ -62,6 +98,28 @@ class SchoolYearCoordinator(DataUpdateCoordinator[SchoolYearData]):
             update_interval=timedelta(hours=poll_hours),
             always_update=False,
         )
+
+    def start_midnight_refresh(self) -> None:
+        """Start one daily state refresh shared by all coordinator entities."""
+        if self._cancel_midnight_refresh is not None:
+            return
+        self._cancel_midnight_refresh = async_track_time_change(
+            self.hass,
+            self._handle_midnight_refresh,
+            hour=0,
+            minute=0,
+            second=5,
+        )
+
+    def stop_midnight_refresh(self) -> None:
+        """Stop the daily state refresh."""
+        if self._cancel_midnight_refresh is not None:
+            self._cancel_midnight_refresh()
+            self._cancel_midnight_refresh = None
+
+    def _handle_midnight_refresh(self, _now: datetime) -> None:
+        """Notify every entity when the local date changes."""
+        self.async_update_listeners()
 
     @property
     def source_url(self) -> str:
@@ -111,19 +169,10 @@ class SchoolYearCoordinator(DataUpdateCoordinator[SchoolYearData]):
     async def _async_update_data(self) -> SchoolYearData:
         """Fetch and parse data from the configured source."""
         try:
-            async with asyncio.timeout(30):
-                response = await self._session.get(self.source_url)
-                response.raise_for_status()
-                html = await response.text()
-        except (TimeoutError, ClientError) as err:
-            raise UpdateFailed(f"Could not fetch school-year page: {err}") from err
-
-        try:
-            return parse_school_year_html(
-                html,
+            return await async_fetch_school_year_data(
+                self.hass,
                 self.source_url,
                 include_inferred_breaks=self.include_inferred_breaks,
-                fetched_at=dt_util.now(),
             )
-        except Exception as err:  # noqa: BLE001 - convert parser errors to HA update errors
-            raise UpdateFailed(f"Could not parse school-year page: {err}") from err
+        except (CannotConnectError, InvalidSourceError) as err:
+            raise UpdateFailed(str(err)) from err

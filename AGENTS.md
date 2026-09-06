@@ -75,12 +75,18 @@ for arbitrary municipalities or page formats.
   `./scripts/set-version X.Y.Z`. Validate that branch before pushing it as a PR,
   then wait for all required PR checks. Accumulated unreleased work may remain on
   `main` indefinitely; a passing version PR is not permission to publish.
-- Keep no changelog file. GitHub release notes are generated from the commits and
-  diff since the previous release when publication occurs.
+- Keep no changelog file. Draft GitHub release notes from the commits and diff
+  since the previous release, but rewrite them for Home Assistant users at the
+  functional and business-requirement level. Describe what improved and why it
+  matters; omit implementation details, file names, test tooling, CI changes,
+  commits, and pull-request mechanics unless they directly change the user
+  experience. Keep the draft outside the repository and show it to the user for
+  approval before publication. Do not use GitHub's automatically generated notes.
 - Publish only when the user explicitly says the prepared version should be
-  published. From a clean, synchronized `main`, run `./scripts/publish-release`.
-  It must verify the version, existing tags, and successful checks on the exact
-  commit before creating the stable tag and GitHub release.
+  published and has approved the release text. From a clean, synchronized `main`,
+  run `./scripts/publish-release PATH_TO_APPROVED_NOTES`. It must verify the
+  version, notes, existing tags, and successful checks on the exact commit before
+  creating the stable tag and GitHub release.
 - Review Dependabot pull requests independently and merge only after required
   checks pass.
 

@@ -10,6 +10,7 @@ from homeassistant import config_entries
 from homeassistant.const import CONF_URL
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.data_entry_flow import FlowResult
+from homeassistant.helpers.selector import TextSelector, TextSelectorConfig, TextSelectorType
 
 from .const import (
     CONF_INCLUDE_INFERRED_LONG_BREAKS,
@@ -33,6 +34,8 @@ from .coordinator import (
     async_fetch_school_year_data,
 )
 
+URL_SELECTOR = TextSelector(TextSelectorConfig(type=TextSelectorType.URL))
+
 
 def _http_url(value: Any) -> str:
     """Validate and normalize an HTTP(S) source URL."""
@@ -48,7 +51,7 @@ def _schema(defaults: dict[str, Any] | None = None) -> vol.Schema:
     defaults = defaults or {}
     return vol.Schema(
         {
-            vol.Optional(CONF_URL, default=defaults.get(CONF_URL, DEFAULT_URL)): _http_url,
+            vol.Optional(CONF_URL, default=defaults.get(CONF_URL, DEFAULT_URL)): URL_SELECTOR,
             vol.Optional(
                 CONF_PAGE_CHECK_INTERVAL_HOURS,
                 default=defaults.get(
@@ -132,6 +135,11 @@ class OptionsFlowHandler(config_entries.OptionsFlowWithReload):
 
 async def _async_validate_input(hass: HomeAssistant, user_input: dict[str, Any]) -> dict[str, str]:
     """Validate connectivity and parser compatibility before saving settings."""
+    try:
+        user_input[CONF_URL] = _http_url(user_input[CONF_URL])
+    except vol.Invalid:
+        return {CONF_URL: "invalid_url"}
+
     try:
         await async_fetch_school_year_data(
             hass,

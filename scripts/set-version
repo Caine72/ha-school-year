@@ -1,0 +1,30 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+cd "${REPO_ROOT}"
+
+VERSION="${1:-}"
+if [[ ! "${VERSION}" =~ ^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$ ]]; then
+  printf 'Usage: ./scripts/set-version X.Y.Z\n' >&2
+  exit 2
+fi
+
+if [[ "$(git branch --show-current)" == "main" ]]; then
+  printf 'Refusing to change the version directly on main.\n' >&2
+  exit 1
+fi
+
+${PYTHON:-python3} - "${VERSION}" <<'PY'
+import json
+from pathlib import Path
+import sys
+
+path = Path("custom_components/school_year/manifest.json")
+manifest = json.loads(path.read_text(encoding="utf-8"))
+manifest["version"] = sys.argv[1]
+path.write_text(json.dumps(manifest, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+PY
+
+printf 'VERSION SET: %s\n' "${VERSION}"

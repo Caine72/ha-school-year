@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+cd "${REPO_ROOT}"
+
+./scripts/check-release
+
+VERSION="$(${PYTHON:-python3} - <<'PY'
+import json
+from pathlib import Path
+
+manifest = json.loads(
+    Path("custom_components/school_year/manifest.json").read_text(encoding="utf-8")
+)
+print(manifest["version"])
+PY
+)"
+TAG="v${VERSION}"
+TARGET="$(git rev-parse HEAD)"
+REPOSITORY="$(gh repo view --json nameWithOwner --jq .nameWithOwner)"
+
+gh release create "${TAG}" \
+  --repo "${REPOSITORY}" \
+  --target "${TARGET}" \
+  --title "${TAG}" \
+  --generate-notes
+
+URL="$(gh release view "${TAG}" --repo "${REPOSITORY}" --json url --jq .url)"
+printf 'RELEASE PUBLISHED: %s\n' "${URL}"

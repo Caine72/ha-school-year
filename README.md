@@ -129,6 +129,11 @@ CI also runs HACS and Hassfest validation. Parser tests use small representative
 
 Run `./scripts/setup-dev` once if the local development dependencies are missing.
 
+Releases are prepared and published manually. `./scripts/set-version X.Y.Z`
+updates the manifest on a release branch, while `./scripts/publish-release`
+verifies the exact `main` commit and creates a stable GitHub release with notes
+generated from changes since the previous release.
+
 ## License
 
 School Year is available under the [MIT License](LICENSE).

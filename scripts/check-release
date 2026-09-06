@@ -5,6 +5,18 @@ set -euo pipefail
 REPO_ROOT="$(git rev-parse --show-toplevel)"
 cd "${REPO_ROOT}"
 
+fail() {
+  printf '%s\n' "$1" >&2
+  exit 1
+}
+
+[[ -z "$(git status --porcelain)" ]] || fail "Release checkout is not clean."
+[[ "$(git branch --show-current)" == "main" ]] || fail "Release checkout is not on main."
+
+git fetch --quiet origin main --tags
+[[ "$(git rev-parse HEAD)" == "$(git rev-parse origin/main)" ]] ||
+  fail "Local main does not match origin/main."
+
 VERSION="$(${PYTHON:-python3} - <<'PY'
 import json
 from pathlib import Path
@@ -16,31 +28,68 @@ print(manifest["version"])
 PY
 )"
 
-if ! grep -Fqx "## ${VERSION}" CHANGELOG.md; then
-  printf 'Missing CHANGELOG.md section for %s\n' "${VERSION}" >&2
-  exit 1
-fi
+REPOSITORY="$(gh repo view --json nameWithOwner --jq .nameWithOwner)"
+LATEST_TAG="$(
+  gh release list \
+    --repo "${REPOSITORY}" \
+    --exclude-drafts \
+    --exclude-pre-releases \
+    --limit 1 \
+    --json tagName \
+    --jq '.[0].tagName'
+)"
+[[ -n "${LATEST_TAG}" ]] || fail "No previous stable GitHub release was found."
 
-if [[ -n "$(git status --porcelain)" ]]; then
-  printf 'Release checkout is not clean.\n' >&2
-  exit 1
-fi
+${PYTHON:-python3} - "${VERSION}" "${LATEST_TAG#v}" <<'PY'
+import re
+import sys
 
-if [[ "$(git branch --show-current)" != "main" ]]; then
-  printf 'Release checkout is not on main.\n' >&2
-  exit 1
-fi
+current, previous = sys.argv[1:]
+pattern = re.compile(r"^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$")
 
-if [[ "$(git rev-parse HEAD)" != "$(git rev-parse origin/main)" ]]; then
-  printf 'Local main does not match origin/main.\n' >&2
-  exit 1
-fi
+
+def parse(value: str) -> tuple[int, int, int]:
+    match = pattern.fullmatch(value)
+    if match is None:
+        raise SystemExit(f"Not a stable semantic version: {value}")
+    return tuple(map(int, match.groups()))
+
+
+if parse(current) <= parse(previous):
+    raise SystemExit(
+        f"Manifest version {current} must be newer than latest release {previous}"
+    )
+PY
 
 if git show-ref --verify --quiet "refs/tags/v${VERSION}"; then
-  printf 'Release tag v%s already exists.\n' "${VERSION}" >&2
-  exit 1
+  fail "Release tag v${VERSION} already exists."
 fi
 
-./scripts/validate
+CHECKS_FILE="$(mktemp)"
+trap 'rm -f "${CHECKS_FILE}"' EXIT
+gh api "repos/${REPOSITORY}/commits/$(git rev-parse HEAD)/check-runs?per_page=100" \
+  > "${CHECKS_FILE}"
 
-printf 'RELEASE CHECK PASS: v%s\n' "${VERSION}"
+${PYTHON:-python3} - "${CHECKS_FILE}" <<'PY'
+import json
+import sys
+
+required = {"HACS", "Hassfest", "Project validation"}
+with open(sys.argv[1], encoding="utf-8") as file:
+    runs = json.load(file)["check_runs"]
+
+latest = {}
+for run in sorted(runs, key=lambda item: item.get("started_at") or ""):
+    if run["name"] in required:
+        latest[run["name"]] = run
+
+failures = [
+    name
+    for name in sorted(required)
+    if name not in latest or latest[name]["conclusion"] != "success"
+]
+if failures:
+    raise SystemExit("Required checks are not successful: " + ", ".join(failures))
+PY
+
+printf 'RELEASE CHECK PASS: v%s after %s\n' "${VERSION}" "${LATEST_TAG}"

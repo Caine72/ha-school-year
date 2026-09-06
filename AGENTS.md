@@ -49,9 +49,13 @@ for arbitrary municipalities or page formats.
 4. Make the smallest complete change and add focused behavioral regression tests.
 5. Do not add tests solely to execute lines or inflate coverage. Prioritize parser
    drift, date boundaries, recovery, configuration, and lifecycle behavior.
-6. Run `./scripts/validate --fix`, then `./scripts/validate`.
-7. Review `git diff --check` and the complete diff before declaring completion.
-8. Report behavior, validation, and remaining risk. Do not claim live acceptance
+6. Run `./scripts/validate --fix`, then `./scripts/validate` on the branch before
+   every initial PR push and before every later push that updates the PR. Do not
+   push a branch whose validation is failing.
+7. After pushing, wait for HACS, Hassfest, and Project validation on the PR and
+   correct every failure before merge.
+8. Review `git diff --check` and the complete diff before declaring completion.
+9. Report behavior, validation, and remaining risk. Do not claim live acceptance
    unless the authenticated local path was actually exercised.
 
 ## Validation and release
@@ -61,10 +65,22 @@ for arbitrary municipalities or page formats.
 - Pull requests must pass HACS, Hassfest, and project validation.
 - Weekly compatibility tests cover the current Home Assistant stable release and
   the next beta when available; they are not repeated during ordinary local work.
-- Use semantic versions. Before a release, update `manifest.json` and
-  `CHANGELOG.md`, run canonical validation once, and confirm the tag exactly
-  matches the manifest version.
-- Publish a GitHub release only from a validated commit on `main`.
+- Releases are manual and stable-only. Do not add an automatic release workflow
+  and do not publish beta, release-candidate, or other prerelease versions.
+- When the user asks to prepare a release, inspect the commits and diff since the
+  latest GitHub release and choose the next semantic version: patch for compatible
+  fixes and maintenance, minor for compatible user-facing functionality, and
+  major for breaking behavior or contracts.
+- Prepare the version on a `codex/release-vX.Y.Z` branch with
+  `./scripts/set-version X.Y.Z`. Validate that branch before pushing it as a PR,
+  then wait for all required PR checks. Accumulated unreleased work may remain on
+  `main` indefinitely; a passing version PR is not permission to publish.
+- Keep no changelog file. GitHub release notes are generated from the commits and
+  diff since the previous release when publication occurs.
+- Publish only when the user explicitly says the prepared version should be
+  published. From a clean, synchronized `main`, run `./scripts/publish-release`.
+  It must verify the version, existing tags, and successful checks on the exact
+  commit before creating the stable tag and GitHub release.
 - Review Dependabot pull requests independently and merge only after required
   checks pass.
 

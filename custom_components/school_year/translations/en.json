@@ -29,7 +29,8 @@
     },
     "error": {
       "cannot_connect": "Unable to connect to the school-year source.",
-      "invalid_source": "The source did not contain a complete, supported school-year schedule."
+      "invalid_source": "The source did not contain a complete, supported school-year schedule.",
+      "invalid_url": "Enter a valid HTTP or HTTPS URL."
     }
   },
   "options": {
@@ -59,7 +60,8 @@
     },
     "error": {
       "cannot_connect": "Unable to connect to the school-year source.",
-      "invalid_source": "The source did not contain a complete, supported school-year schedule."
+      "invalid_source": "The source did not contain a complete, supported school-year schedule.",
+      "invalid_url": "Enter a valid HTTP or HTTPS URL."
     }
   },
   "entity": {

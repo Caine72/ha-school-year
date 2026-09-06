@@ -7,7 +7,9 @@ from homeassistant import config_entries
 from homeassistant.const import CONF_URL
 from homeassistant.core import HomeAssistant
 from homeassistant.data_entry_flow import FlowResultType
+from homeassistant.helpers import config_validation as cv
 from pytest_homeassistant_custom_component.common import MockConfigEntry
+from voluptuous_serialize import convert
 
 from custom_components.school_year.config_flow import _schema
 from custom_components.school_year.const import (
@@ -26,16 +28,31 @@ USER_INPUT = {
 }
 
 
-def test_schema_rejects_non_http_url() -> None:
+def test_schema_serializes_for_home_assistant_frontend() -> None:
+    """The config form can cross Home Assistant's HTTP API boundary."""
+    convert(_schema(), custom_serializer=cv.custom_serializer)
+
+
+@pytest.mark.parametrize(
+    "invalid_url",
+    ("/tmp/school.html", "file:///tmp/school.html", "ftp://example.com"),
+)
+async def test_user_flow_rejects_non_http_url(hass: HomeAssistant, invalid_url: str) -> None:
     """Local files and unsupported URL schemes cannot be configured."""
-    schema = _schema()
-    for invalid_url in ("/tmp/school.html", "file:///tmp/school.html", "ftp://example.com"):
-        try:
-            schema({CONF_URL: invalid_url})
-        except Exception:
-            pass
-        else:
-            raise AssertionError(f"Accepted invalid URL: {invalid_url}")
+    with patch(
+        "custom_components.school_year.config_flow.async_fetch_school_year_data",
+        new=AsyncMock(),
+    ) as validate:
+        result = await hass.config_entries.flow.async_init(
+            DOMAIN, context={"source": config_entries.SOURCE_USER}
+        )
+        result = await hass.config_entries.flow.async_configure(
+            result["flow_id"], {**USER_INPUT, CONF_URL: invalid_url}
+        )
+
+    assert result["type"] is FlowResultType.FORM
+    assert result["errors"] == {CONF_URL: "invalid_url"}
+    validate.assert_not_awaited()
 
 
 async def test_user_flow_validates_and_creates_entry(hass: HomeAssistant) -> None:

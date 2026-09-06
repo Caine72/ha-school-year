@@ -3,9 +3,9 @@
 A custom Home Assistant integration that fetches school-year dates and breaks from a supported official source and exposes them as Home Assistant calendar, binary sensor, and sensor entities.
 
 > [!IMPORTANT]
-> This integration is maintained for my private Home Assistant setup. It is public so it can be installed and updated through HACS as a custom repository. Bug reports are welcome, but there is no support promise, no compatibility guarantee, and no ambition to make this a general-purpose school calendar integration.
->
-> It is also vibe coded with AI assistance. The code is intended to be practical and understandable rather than polished as a broadly maintained open-source project.
+> This integration is maintained for a private Home Assistant setup and published primarily for HACS installation. Bug reports are welcome, but there is no support or broad compatibility promise.
+
+Development is AI-assisted.
 
 ## Supported source
 

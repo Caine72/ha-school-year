@@ -91,6 +91,9 @@ async def test_options_flow_validates_and_reloads(hass: HomeAssistant) -> None:
         patch.object(hass.config_entries, "async_reload", new=AsyncMock()) as reload_entry,
     ):
         result = await hass.config_entries.options.async_init(entry.entry_id)
+        assert result["type"] is FlowResultType.FORM
+        assert result["step_id"] == "init"
+
         result = await hass.config_entries.options.async_configure(
             result["flow_id"], {**USER_INPUT, CONF_PAGE_CHECK_INTERVAL_HOURS: 48}
         )

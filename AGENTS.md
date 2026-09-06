@@ -39,24 +39,53 @@ for arbitrary municipalities or page formats.
 - Entity unique IDs derive from the config-entry identity and stable suffixes,
   never source labels or mutable display names.
 
+## Home Assistant conventions
+
+- Follow current Home Assistant developer patterns and inspect the checked-out
+  Home Assistant Core source when uncertain. For version-sensitive APIs, syntax,
+  or deprecations, check current official documentation and release notes.
+- Prefer official Home Assistant developer documentation over third-party examples.
+- Preserve the config-entry model and coordinator ownership of fetched data.
+- Keep source retrieval, validation, and normalized school-year data in the
+  integration; entities only present coordinator data.
+- Keep `strings.json` and `translations/en.json` synchronized when user-visible
+  configuration or entity text changes.
+- Use the repository's current Python syntax and do not use YAML anchors.
+
 ## Development workflow
 
-1. Inspect `git status`, the current branch, nearby code, and relevant tests.
-2. For implementation, update `main` and work on a `codex/` branch. Never publish
-   directly to `main`; use a pull request.
-3. Check current Home Assistant Core code or official developer documentation
-   before changing version-sensitive APIs.
-4. Make the smallest complete change and add focused behavioral regression tests.
-5. Do not add tests solely to execute lines or inflate coverage. Prioritize parser
+1. Start from the repository root, inspect `git status`, switch to `main`, and
+   update from `origin/main` before creating a development branch.
+2. Do all implementation work on a separate `codex/` branch. Bring changes back
+   to `main` only after validation passes and the user explicitly approves.
+3. When publishing to `origin`, always push a branch and open a pull request,
+   even when direct pushes to `main` are technically allowed.
+4. Inspect nearby code and relevant tests. Check current Home Assistant Core code
+   or official developer documentation before changing version-sensitive APIs.
+5. For non-trivial changes, present a concise plan before coding.
+6. Make the smallest complete change and add focused behavioral regression tests.
+   Do not add tests solely to execute lines or inflate coverage. Prioritize parser
    drift, date boundaries, recovery, configuration, and lifecycle behavior.
-6. Run `./scripts/validate --fix`, then `./scripts/validate` on the branch before
+7. Run `./scripts/validate --fix`, then `./scripts/validate` on the branch before
    every initial PR push and before every later push that updates the PR. Do not
    push a branch whose validation is failing.
-7. After pushing, wait for HACS, Hassfest, and Project validation on the PR and
-   correct every failure before merge.
-8. Review `git diff --check` and the complete diff before declaring completion.
-9. Report behavior, validation, and remaining risk. Do not claim live acceptance
-   unless the authenticated local path was actually exercised.
+8. After pushing, wait for HACS, Hassfest, and Project validation on the PR and
+   correct every failure before asking to merge.
+9. Review `git diff --check` and the complete diff before declaring completion.
+10. Report changed files, behavior, validation, and remaining risk. Do not claim
+    live acceptance unless the authenticated local path was actually exercised.
+11. Do not commit, push, rewrite history, or modify unrelated files unless the
+    user requested the implementation work.
+
+## Environment
+
+- Integration source: `custom_components/school_year`
+- Tests: `tests`
+- Full validation entry point: `./scripts/validate`
+- Real Home Assistant credentials and paths: ignored `.real_ha_acceptance.env`
+- Public environment template: `.real_ha_acceptance.env.example`
+- Home Assistant runtime: the existing development Docker container discovered
+  at runtime; never persist its name or ID
 
 ## Validation and release
 
@@ -99,15 +128,28 @@ for arbitrary municipalities or page formats.
 - The Home Assistant development environment runs in a Docker container.
   Container names and IDs are ephemeral; discover the configured runtime from
   mounts or port 8123 instead of persisting machine-specific details.
-- If the container is stopped, start that existing container. If Home Assistant
-  is not running, start it inside the container from
-  the configured Core directory with its existing virtual environment.
-  Never start a competing Home Assistant process from the desktop checkout.
-- Verify unauthenticated reachability, then authenticated `/api/` access without
-  displaying the token. Use live acceptance only when it adds confidence beyond
-  deterministic tests, especially for setup, reload, entity, or lifecycle work.
+- A failed sandbox request to `localhost:8123` is not decisive. Perform the health
+  check at host level: an unauthenticated `401` proves reachability, then require
+  an authenticated `/api/` response using the ignored token without displaying it.
+- If Home Assistant is unreachable, discover the existing container. Start it if
+  stopped, check for an existing Home Assistant process, and start Home Assistant
+  inside that container from the configured Core directory with its existing
+  virtual environment when absent. Wait for port 8123 and authenticated API access.
+- Never start a competing Home Assistant process from the desktop checkout. If
+  Docker access is unavailable, stop instead of improvising and report the exact
+  permission blocker.
+- Inspect startup logs for `school_year` setup failures. Use an integration reload
+  when sufficient and a full restart only for module loading or lifecycle changes.
+- Use live acceptance when it adds confidence beyond deterministic tests,
+  especially for setup, reload, entity, or lifecycle work.
 - Treat live acceptance as potentially state-changing. Inspect the target first
   and prefer read-only checks when sufficient.
+
+## Current direction
+
+The product goals and architecture invariants above define current direction.
+If roadmap or milestone documents are added later, read them before starting
+milestone work and keep them focused on future direction.
 
 ## Security and repository hygiene
 

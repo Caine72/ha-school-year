@@ -131,8 +131,9 @@ Run `./scripts/setup-dev` once if the local development dependencies are missing
 
 Releases are prepared and published manually. `./scripts/set-version X.Y.Z`
 updates the manifest on a release branch, while `./scripts/publish-release`
-verifies the exact `main` commit and creates a stable GitHub release with notes
-generated from changes since the previous release.
+verifies the exact `main` commit and creates a stable GitHub release using an
+approved, user-focused notes file prepared from changes since the previous
+release. Release notes describe functional outcomes and omit development detail.
 
 ## License
 

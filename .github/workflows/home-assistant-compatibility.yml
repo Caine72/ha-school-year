@@ -93,7 +93,8 @@ jobs:
         run: |
           uv venv .venv --python "${pythonLocation}/bin/python"
           uv pip install --python .venv/bin/python \
-            pytest-homeassistant-custom-component
+            pytest-homeassistant-custom-component \
+            voluptuous-serialize
           uv pip install --python .venv/bin/python --upgrade --no-deps \
             "homeassistant==${HA_VERSION}"
       - name: Run behavioral test suite

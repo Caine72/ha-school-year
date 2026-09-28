@@ -71,11 +71,42 @@ for arbitrary municipalities or page formats.
    push a branch whose validation is failing.
 8. After pushing, wait for HACS, Hassfest, and Project validation on the PR and
    correct every failure before asking to merge.
-9. Review `git diff --check` and the complete diff before declaring completion.
-10. Report changed files, behavior, validation, and remaining risk. Do not claim
+9. Before asking to merge, have an independent reviewer inspect the final PR
+   diff. The reviewer must not be the agent that implemented the change. A fresh,
+   read-only Codex task using these instructions is acceptable. Resolve every
+   finding or record why it is accepted, then repeat the review if the resolution
+   materially changes the diff.
+10. Review `git diff --check` and the complete diff before declaring completion.
+11. Report changed files, behavior, validation, review findings, and remaining
+    risk. Do not claim
     live acceptance unless the authenticated local path was actually exercised.
-11. Do not commit, push, rewrite history, or modify unrelated files unless the
+12. Do not commit, push, rewrite history, or modify unrelated files unless the
     user requested the implementation work.
+
+## Independent code review
+
+Independent review is a semantic gate in addition to automated validation. Give
+the reviewer the change requirements and the final diff against `main`. The
+reviewer stays read-only and reports findings first, ordered by severity, with
+file and line references. If there are no findings, the reviewer states that
+explicitly and identifies any residual risk or testing gap.
+
+Review for general correctness, regressions, security and privacy, compatibility,
+error handling, and whether focused tests prove the changed behavior. In
+particular, verify the product goals and architecture invariants above, including:
+
+- parser completeness and explicit source-format drift detection;
+- preservation of last known-good coordinator data after fetch or parse errors;
+- date boundaries, inclusive internal end dates, and exclusive calendar ends;
+- coordinator ownership of refresh and daily date-change behavior;
+- config and options validation, reload behavior, and stable entity identities;
+- synchronized user-visible strings and translations; and
+- absence of credentials, household data, private paths, and local environment
+  details.
+
+The implementing agent's own diff inspection does not satisfy this gate. Review
+approval is not permission to merge; merging still requires explicit user
+approval and all required GitHub checks.
 
 ## Environment
 

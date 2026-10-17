@@ -10,7 +10,7 @@ from datetime import datetime, timedelta
 from aiohttp import ClientError
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_URL
-from homeassistant.core import HomeAssistant
+from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.event import async_track_time_change
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
@@ -117,6 +117,7 @@ class SchoolYearCoordinator(DataUpdateCoordinator[SchoolYearData]):
             self._cancel_midnight_refresh()
             self._cancel_midnight_refresh = None
 
+    @callback
     def _handle_midnight_refresh(self, _now: datetime) -> None:
         """Notify every entity when the local date changes."""
         self.async_update_listeners()

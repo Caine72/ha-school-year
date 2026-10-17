@@ -3,7 +3,7 @@
 from datetime import datetime
 from unittest.mock import MagicMock, patch
 
-from homeassistant.core import HomeAssistant
+from homeassistant.core import HomeAssistant, is_callback
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from custom_components.school_year.const import DOMAIN
@@ -24,6 +24,7 @@ def test_midnight_refresh_has_single_lifecycle(hass: HomeAssistant) -> None:
         coordinator.start_midnight_refresh()
 
     track.assert_called_once()
+    assert is_callback(coordinator._handle_midnight_refresh)
     with patch.object(coordinator, "async_update_listeners") as update_listeners:
         coordinator._handle_midnight_refresh(datetime.now())
     update_listeners.assert_called_once_with()

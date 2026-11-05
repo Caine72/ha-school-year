@@ -19,7 +19,7 @@ jobs:
     outputs:
       matrix: ${{ steps.releases.outputs.matrix }}
     steps:
-      - name: Resolve stable and beta releases
+      - name: Resolve stable and published beta releases
         id: releases
         env:
           GH_TOKEN: ${{ github.token }}
@@ -31,9 +31,12 @@ jobs:
           import os
           import re
           import sys
+          import urllib.request
 
           releases = json.load(open(sys.argv[1], encoding="utf-8"))
           releases = [release for release in releases if not release["draft"]]
+          with urllib.request.urlopen("https://pypi.org/pypi/homeassistant/json") as response:
+              published_versions = set(json.load(response)["releases"])
           stable = next(
               (release for release in releases if not release["prerelease"]),
               None,
@@ -55,6 +58,7 @@ jobs:
                   for release in releases
                   if release["prerelease"]
                   and version(release["tag_name"])[:2] > stable_version[:2]
+                  and release["tag_name"] in published_versions
               ),
               None,
           )
